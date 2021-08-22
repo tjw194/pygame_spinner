@@ -2,73 +2,124 @@ import pygame
 from math import cos, sin, radians, degrees, pi
 
 
-def pie(scr, col, middle, radius, start_angle, stop_angle):
+def pie(scr, color, middle, radius, start_angle, stop_angle):
+    """
+    helper function to draw spinner colored segments
+    :param scr: pygame display surface
+    :param color: segment color
+    :param middle: center of the spinner board to start drawing color
+    :param radius: length of colored line (radius of spinner board)
+    :param start_angle: start of segment
+    :param stop_angle: end of segment
+    :return: None
+    """
     theta = start_angle
-    while theta <= stop_angle:
-        pygame.draw.line(scr, col, middle,
-                         (middle[0] + radius * cos(radians(theta)), middle[1] + radius * sin(radians(theta))), 2)
+    while theta < stop_angle:
+        pygame.draw.line(scr, color, middle,
+                         (middle[0] + radius * cos(radians(theta)), middle[1] + radius * sin(radians(theta))), 3)
         theta += 0.05
 
 
-def show_spinner_board(sfc, n_segments):
-    # TODO: d should not be hard coded
-    d = 400
-    r = d / 2
-    width, height = pygame.display.get_surface().get_size()
-    center_x = width / 2
-    center_y = height / 2
-    # TODO: should not be hard coded
-    colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
+class Spinner:
+    # Spinner class to create background of spinner board
+    def __init__(self, pygame_surface, location, radius, number_of_segments):
+        """
+        init function for spinner board
+        :param pygame_surface: pygame surface on which to draw the spinner
+        :param location: (x, y) location for center of the spinner board
+        :param radius: radius of the spinner board in pixels
+        :param number_of_segments: number of segments to draw on the spinner board
+        """
+        self.pygame_surface = pygame_surface
+        self.number_of_segments = number_of_segments
+        self.location = location
+        self.radius = radius
+        self.borders = True
+        self.border_color = 'black'
+        self.border_width = 4
+        self.colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
 
-    # TODO: color should not be hard coded
-    pygame.draw.circle(sfc, 'black', (center_x, center_y), r)
+        self.center_x = location[0]
+        self.center_y = location[1]
 
-    # draw spinner segments
-    # coloring segments
-    angle_interval = 360 / n_segments
-    segment_angle = 0
-    for i in range(n_segments):
-        pie(sfc, colors[i % len(colors)], (center_x, center_y), r * 0.95, segment_angle,
-            segment_angle + angle_interval)
-        segment_angle += angle_interval
+    def show(self):
+        # shows spinner board on pygame surface
 
-    # adding line borders for segments
-    angle_interval = 360 / n_segments
-    segment_angle = 0
-    for i in range(n_segments):
-        # TODO: color and line width are hard coded
-        pygame.draw.line(sfc, 'black', (center_x, center_y),
-                         (center_x + 0.98*r * cos(radians(segment_angle)), center_y + 0.98*r * sin(radians(segment_angle))), 4)
-        segment_angle += angle_interval
+        # coloring spinner segments based on color list in init function
+        angle_interval = 360 / self.number_of_segments
+        segment_angle = 0
+        for i in range(self.number_of_segments):
+            pie(self.pygame_surface, self.colors[i % len(self.colors)], (self.center_x, self.center_y),
+                self.radius - self.border_width, segment_angle, segment_angle + angle_interval)
+            segment_angle += angle_interval
+
+        # draw outer border
+        pygame.draw.circle(self.pygame_surface, self.border_color, (self.center_x, self.center_y), self.radius,
+                           self.border_width)
+
+        # adding line borders for segments
+        if self.borders:
+            segment_angle = 0
+            for i in range(self.number_of_segments):
+                pygame.draw.line(self.pygame_surface, self.border_color, (self.center_x, self.center_y),
+                                 (self.center_x + (self.radius - self.border_width) * cos(radians(segment_angle)),
+                                  self.center_y + (self.radius - self.border_width) * sin(radians(segment_angle))), self.border_width)
+                segment_angle += angle_interval
+
+        # TODO: add text to spinner segments
 
 
-# drawing spinner
-def show_spinner(sfc, angle, color, arm_width=3):
-    d = 400
-    r = 0.8 * d / 2
-    width, height = pygame.display.get_surface().get_size()
-    center_x = width / 2
-    center_y = height / 2
+class SpinnerArm:
+    # SpinnerArm class to draw the pointer
+    def __init__(self, pygame_surface, location, radius):
+        """
+        init function for spinner arm
+        :param pygame_surface: pygame surface on which to draw the pointer
+        :param location: location: (x, y) location for center of the spinner board
+        :param radius: length of the pointer arm
+        """
+        self.pygame_surface = pygame_surface
+        self.location = location
+        self.radius = radius
+        self.arm_color = 'black'
+        self.arm_width = 4
+        self.cap_color = 'black'  # small circle in center of spinner
+        self.angle = 0
+        self.friction = 0.5
+        self.speed = 0
 
-    pointer_x = center_x + r * cos(radians(angle))
-    pointer_y = center_y + r * sin(radians(angle))
+        self.center_x = location[0]
+        self.center_y = location[1]
 
-    def get_points():
-        # list of un-rotated point locations
-        triangle = [0, degrees(3 * pi / 4), degrees(5 * pi / 4)]
+    def show(self):
 
-        result = list()
-        for t in triangle:
-            # apply the circle formula
-            x = pointer_x + 10 * cos(radians(t + angle))
-            y = pointer_y + 10 * sin(radians(t + angle))
-            result.append((x, y))
+        pointer_x = self.center_x + self.radius * cos(radians(self.angle))
+        pointer_y = self.center_y + self.radius * sin(radians(self.angle))
 
-        return result
+        def get_points():
+            # list of un-rotated point locations
+            triangle = [0, degrees(3 * pi / 4), degrees(5 * pi / 4)]
 
-    # draw spinner arm
-    pygame.draw.line(sfc, color, (pointer_x, pointer_y), (center_x, center_y), arm_width)
-    pygame.draw.polygon(sfc, color, get_points())
-    pygame.draw.circle(sfc, 'black', (center_x, center_y), r / 6)
+            result = list()
+            for t in triangle:
+                # apply the circle formula
+                x = pointer_x + (self.arm_width * 3) * cos(radians(t + self.angle))
+                y = pointer_y + (self.arm_width * 3) * sin(radians(t + self.angle))
+                result.append((x, y))
+
+            return result
+
+        # draw spinner arm
+        pygame.draw.line(self.pygame_surface, self.arm_color, (pointer_x, pointer_y), (self.center_x, self.center_y), self.arm_width)
+        pygame.draw.polygon(self.pygame_surface, self.arm_color, get_points())
+
+        # center circle
+        pygame.draw.circle(self.pygame_surface, self.cap_color, (self.center_x, self.center_y), self.radius / 20)
+
+
+
+
+
+
 
 
