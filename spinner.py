@@ -116,7 +116,11 @@ class SpinnerArm:
         # center circle
         pygame.draw.circle(self.pygame_surface, self.cap_color, (self.center_x, self.center_y), self.radius / 20)
 
-
+    def spin(self):
+        self.speed -= self.friction
+        if self.speed < 0:
+            self.speed = 0.0
+        self.angle += self.speed
 
 
 

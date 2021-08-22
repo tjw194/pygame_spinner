@@ -23,10 +23,11 @@ def close():
     pygame.quit()
     sys.exit()
 
+
 # creating the spinner object and configuring some options
 spinner = Spinner(display, (400, 400), 300, 12)
 spinner.colors = ['blue', 'gray', 'brown']
-spinner.borders = True
+spinner.borders = False
 
 # creating 2 spinner arm objects and configuring some options
 arm = SpinnerArm(display, (400, 400), 280)
@@ -45,15 +46,9 @@ while True:
             arm.speed = random.randrange(40, 75, 1)
             arm2.speed = random.randrange(40, 75, 1)
 
-    # reduce spinner speed based on friction value
-    arm.speed -= arm.friction
-    arm2.speed -= arm2.friction
-
-    # stop spinning so spinner does not go in reverse direction
-    if arm.speed < 0:
-        arm.speed = 0.0
-    if arm2.speed < 0:
-        arm2.speed = 0.0
+    # animate spinner arms
+    arm.spin()
+    arm2.spin()
 
     # show the spinner board and spinners
     display.fill(background)
@@ -61,9 +56,7 @@ while True:
     arm.show()
     arm2.show()
 
-    # updating angle of each spinner arm
-    arm.angle += arm.speed
-    arm2.angle += arm2.speed
+
 
     pygame.display.update()
     clock.tick()
